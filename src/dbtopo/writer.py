@@ -79,21 +79,23 @@ def ensure_table_with_metadata(
         col_defs.append(col_sql)
 
     cols_str = ",\n  ".join(col_defs)
+    # Build TBLPROPERTIES inline to avoid a separate ALTER TABLE that races
+    # under concurrent for_each_task iterations.
+    props_parts = [f"'crs' = '{crs}'"]
+    if version:
+        props_parts.append(f"'bdtopo_version' = '{version}'")
+    if version_date:
+        props_parts.append(f"'bdtopo_version_date' = '{version_date}'")
+    props_sql = ", ".join(props_parts)
+
     create_sql = (
         f"CREATE TABLE IF NOT EXISTS {table_name} (\n"
         f"  {cols_str}\n"
         f") USING DELTA\n"
-        f"COMMENT '{_escape_comment(table_desc)}'"
+        f"COMMENT '{_escape_comment(table_desc)}'\n"
+        f"TBLPROPERTIES ({props_sql})"
     )
     spark.sql(create_sql)
-
-    # Set table properties for programmatic access.
-    props = f"'crs' = '{crs}'"
-    if version:
-        props += f", 'bdtopo_version' = '{version}'"
-    if version_date:
-        props += f", 'bdtopo_version_date' = '{version_date}'"
-    spark.sql(f"ALTER TABLE {table_name} SET TBLPROPERTIES ({props})")
 
 
 def _ingestion_schema(schema: StructType) -> tuple[StructType, dict[str, str]]:

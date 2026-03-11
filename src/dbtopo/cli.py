@@ -41,8 +41,9 @@ def main():
 @click.option("--version", default="3-5")
 @click.option("--projection", default="LAMB93")
 @click.option("--version-date", default="2025-09-15")
+@click.option("--skip-md5", is_flag=True, default=False, help="Skip MD5 verification")
 def download_cmd(
-    departments, catalog, schema, volume, version, projection, version_date
+    departments, catalog, schema, volume, version, projection, version_date, skip_md5
 ):
     """Download BD TOPO .7z archives to a Databricks Volume."""
     dept_list = _parse_departments(departments)
@@ -60,6 +61,7 @@ def download_cmd(
             version=version,
             projection=projection,
             version_date=version_date,
+            verify_md5=not skip_md5,
         )
         set_task_value(spark, f"archive_path_{dept}", str(path))
 

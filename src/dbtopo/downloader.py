@@ -124,8 +124,9 @@ def download_department(
     version: str = "3-5",
     projection: str = "LAMB93",
     version_date: str = "2025-09-15",
+    verify_md5: bool = True,
 ) -> Path:
     url = build_download_url(version, projection, dept, version_date)
     filename = os.path.basename(url)
     dest = Path(volume_path) / filename
-    return download_file(url, dest)
+    return download_file(url, dest, verify_md5=verify_md5)
